@@ -1,6 +1,6 @@
 //Posição do player
-var playerX = 0;
-var playerY = 0;
+var moveLeft = false;
+var moveRight = false;
 
 //Canvas & Contexto
 var canvas 	= null;
@@ -11,9 +11,14 @@ var canvas_width = 320;
 var canvas_height = 480;
 
 var game = {
-	velocity: 1,
+	velocity: 30,
 	road1: 0,
-	road2: -480
+	road2: -480,
+	playerX: 320,
+	currentTime: null,
+	lastTime: null,
+	roadImg: null,
+	carImg: null
 };
 
 window.addEventListener("load", function(event){
@@ -21,20 +26,45 @@ window.addEventListener("load", function(event){
 	canvas = document.getElementById("game_screen");
 	ctx = canvas.getContext("2d");
 
+	game.roadImg = new Image();
+	game.roadImg.src = "img/road.png";
+
+	game.carImg = new Image();
+	game.carImg.src = "img/car.png";
+
+	window.addEventListener("keydown", function(event){
+		if(event.key == "ArrowLeft"){
+			moveLeft = true;
+		}
+
+		if(event.key == "ArrowRight"){
+			moveRight = true;
+		}
+	});
+
+	window.addEventListener("keyup", function(event){
+		if(event.key == "ArrowLeft"){
+			moveLeft = false;
+		}
+
+		if(event.key == "ArrowRight"){
+			moveRight = false;
+		}
+	});
+
 	requestAnimationFrame(loop);
 
 });
 
-var loop = function(){
+var render = function(){
 	//Desenhando a pista
-	var img = new Image();
-	img.src = "img/road.png";
 	ctx.clearRect(0, game.road1, canvas_width, canvas_height);
 	ctx.clearRect(0, game.road2, canvas_width, canvas_height);
 	game.road1 += game.velocity;
 	game.road2 += game.velocity;
-	ctx.drawImage(img, 0, game.road1, canvas_width, canvas_height);
-	ctx.drawImage(img, 0, game.road2, canvas_width, canvas_height);
+	ctx.drawImage(game.roadImg, 0, game.road1, canvas_width, canvas_height);
+	ctx.fillStyle = "#f00";
+	ctx.drawImage(game.roadImg, 0, game.road2, canvas_width, canvas_height);
 
 	if(game.road2 == 0){
 		game.road1 = -480;
@@ -44,5 +74,43 @@ var loop = function(){
 		game.road2 = -480;
 	}
 
+	//Desenhando o player
+	if(moveLeft && game.playerX > 120){
+		game.playerX -= 20;
+	}
+
+	if(moveRight && game.playerX < canvas_width+20){
+		game.playerX += 20;
+	}
+
+	ctx.drawImage(game.carImg, game.playerX-100, canvas_height-90, 60, 80);
+}
+
+var loop = function(){
+
+	//Pegando data atual
+	game.currentTime = Date.now();
+	// var ms = time.getTime();
+
+	if(game.lastTime == null){
+		game.lastTime = Date.now();
+	}
+
+	// console.log("lastTime: ", game.lastTime);
+	// console.log("currentTime: ", game.currentTime);
+	// console.log("diferença: ", game.currentTime - game.lastTime);
+
+	if((game.currentTime - game.lastTime) >= 10){
+		game.lastTime = game.currentTime;
+
+		render();
+	}
+
+	//game.currentTime++;
+	// console.log(game.currentTime);
+	//if(game.currentTime == 2){
+	//	game.currentTime = 0;
+	//	console.log("passou aqui");
 	requestAnimationFrame(loop);
+//}
 }
