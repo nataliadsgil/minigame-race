@@ -7,7 +7,8 @@ var canvas 	= null;
 var ctx 	= null;
 
 //Dimensões do canvas
-var canvas_width = 320;
+var canvas_width = 420;
+var game_width = 320;
 var canvas_height = 480;
 
 //Array Posição inimigo
@@ -22,7 +23,10 @@ var game = {
 	lastTime: null,
 	roadImg: null,
 	carImg: null,
-	showEnemy: true
+	showEnemy: true,
+	colide: false,
+	score: 0,
+	lifes: 3
 };
 
 var enemies = [];
@@ -68,9 +72,9 @@ var render = function(){
 	ctx.clearRect(0, game.road2, canvas_width, canvas_height);
 	game.road1 += game.velocity;
 	game.road2 += game.velocity;
-	ctx.drawImage(game.roadImg, 0, game.road1, canvas_width, canvas_height);
+	ctx.drawImage(game.roadImg, 0, game.road1, game_width, canvas_height);
 	ctx.fillStyle = "#f00";
-	ctx.drawImage(game.roadImg, 0, game.road2, canvas_width, canvas_height);
+	ctx.drawImage(game.roadImg, 0, game.road2, game_width, canvas_height);
 
 	if(game.road2 == 0){
 		game.road1 = -480;
@@ -80,12 +84,16 @@ var render = function(){
 		game.road2 = -480;
 	}
 
+	//Desenhando o score
+	ctx.fillStyle = "#0f0";
+	ctx.fillRect(game_width, 0, canvas_width-game_width, canvas_height);
+
 	//Desenhando o player
 	if(moveLeft && game.playerX > 120){
 		game.playerX -= 20;
 	}
 
-	if(moveRight && game.playerX < canvas_width+20){
+	if(moveRight && game.playerX < game_width+20){
 		game.playerX += 20;
 	}
 
@@ -106,18 +114,38 @@ var render = function(){
 	}
 
 	for(enemy in enemies){
-		// console.log(enemies[enemy]);
 		ctx.drawImage(game.carImg, enemies[enemy].X, enemies[enemy].Y, 60, 80);
-		
-		enemies[enemy].Y += game.velocity;
+	
+		if((game.playerX-100) > enemies[enemy].X){
+			toleranceCollisionX = (game.playerX-100) - enemies[enemy].X - 60;
+		}
+		else{
+			toleranceCollisionX = enemies[enemy].X - (game.playerX-100) - 60;
+		}
 
+		if(toleranceCollisionX < 0 
+			&& (enemies[enemy].Y >= (canvas_height-100-80)) 
+			&&  (enemies[enemy].Y <= (canvas_height-100+80))){
+			console.log("Colidiu");
+			console.log("enemy X: ", enemies[enemy].X);
+			console.log("enemy Y: ", enemies[enemy].Y);
+			console.log("player X: ", (game.playerX-100));
+			console.log("player Y: ", (canvas_height-100-80));
+			enemies.splice(enemy, 1);
+			game.showEnemy = true;
+			game.colide = true;
+			return false;
+		}
+
+		enemies[enemy].Y += game.velocity;
+		
 		if(enemies[enemy].Y > 480+80){
-			console.log("DESTRUIR");
 			enemies.splice(enemy, 1);
 			console.log(enemies);
 			game.showEnemy = true;
 		}
 	}
+
 
 }
 
@@ -125,27 +153,18 @@ var loop = function(){
 
 	//Pegando data atual
 	game.currentTime = Date.now();
-	// var ms = time.getTime();
 
 	if(game.lastTime == null){
 		game.lastTime = Date.now();
 	}
 
-	// console.log("lastTime: ", game.lastTime);
-	// console.log("currentTime: ", game.currentTime);
-	// console.log("diferença: ", game.currentTime - game.lastTime);
-
 	if((game.currentTime - game.lastTime) >= 100){
 		game.lastTime = game.currentTime;
-
+		game.score++;
+		console.log("SCORE: ", game.score);
 		render();
 	}
 
-	//game.currentTime++;
-	// console.log(game.currentTime);
-	//if(game.currentTime == 2){
-	//	game.currentTime = 0;
-	//	console.log("passou aqui");
 	requestAnimationFrame(loop);
-//}
+
 }
